@@ -1,0 +1,51 @@
+
+/* Class = "NSMenuItem"; title = "Automatisch Drehen"; ObjectID = "537"; */
+"537.title" = "Automatisch Drehen";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+←"; ObjectID = "538"; */
+"538.ibShadowedToolTip" = "Fn+Ctrl+←";
+
+/* Class = "NSMenuItem"; title = "Links Oben"; ObjectID = "538"; */
+"538.title" = "Links Oben";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+→"; ObjectID = "539"; */
+"539.ibShadowedToolTip" = "Fn+Ctrl+→";
+
+/* Class = "NSMenuItem"; title = "Rechts Oben"; ObjectID = "539"; */
+"539.title" = "Rechts Oben";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↑"; ObjectID = "544"; */
+"544.ibShadowedToolTip" = "Fn+Ctrl+↑";
+
+/* Class = "NSMenuItem"; title = "Horizontal"; ObjectID = "544"; */
+"544.title" = "Horizontal";
+
+/* Class = "NSMenuItem"; title = "Beim Systemstart Starten"; ObjectID = "545"; */
+"545.title" = "Beim Systemstart Starten";
+
+/* Class = "NSMenuItem"; title = "Über iRotar"; ObjectID = "546"; */
+"546.title" = "Über iRotar";
+
+/* Class = "NSMenuItem"; title = "iRotar Beenden"; ObjectID = "547"; */
+"547.title" = "iRotar Beenden";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↓"; ObjectID = "549"; */
+"549.ibShadowedToolTip" = "Fn+Ctrl+↓";
+
+/* Class = "NSMenuItem"; title = "Horizontal Umgekehrt"; ObjectID = "549"; */
+"549.title" = "Horizontal Umgekehrt";
+
+/* Class = "NSMenuItem"; title = "Hauptbildschirm"; ObjectID = "550"; */
+"550.title" = "Hauptbildschirm";
+
+/* Class = "NSMenuItem"; title = "Globale Hotkey Benutzen"; ObjectID = "563"; */
+"563.title" = "Globale Hotkey Benutzen";
+
+/* Class = "NSMenuItem"; title = "iRotar Hilfe"; ObjectID = "565"; */
+"565.title" = "iRotar Hilfe";
+
+/* Class = "NSMenuItem"; title = "SuddenMotionSensor Achsen Tauscht"; ObjectID = "575"; */
+"575.title" = "SuddenMotionSensor Achsen Tauscht";
+
+/* Class = "NSMenuItem"; title = "Rotate external Mouse and Trackpad"; ObjectID = "581"; */
+"581.title" = "Externe Maus und Trackpad Drehen";

@@ -1,0 +1,12 @@
+/* Localized versions of Info.plist keys */
+"Automatically rotate"="自動旋轉";
+"Enable Global Hotkey"="使用全局熱鍵";
+"Launch by System Start"="隨系統啟動";
+"Sensor Axes Swapped"="反轉震動傳感器坐標軸";
+"Rotate external Mouse and Trackpad"="同步旋轉外部鼠標及觸摸板";
+
+"Main Display"="主顯示器";
+"Landscape"="水平顯示";
+"Left Portrait"="左側直立";
+"Right Portrait"="右側直立";
+"Upside Down"="水平翻轉";

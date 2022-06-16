@@ -1,0 +1,51 @@
+
+/* Class = "NSMenuItem"; title = "自動旋轉"; ObjectID = "537"; */
+"537.title" = "自動旋轉";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+←"; ObjectID = "538"; */
+"538.ibShadowedToolTip" = "Fn+Ctrl+←";
+
+/* Class = "NSMenuItem"; title = "左側直立"; ObjectID = "538"; */
+"538.title" = "左側直立";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+→"; ObjectID = "539"; */
+"539.ibShadowedToolTip" = "Fn+Ctrl+→";
+
+/* Class = "NSMenuItem"; title = "右側直立"; ObjectID = "539"; */
+"539.title" = "右側直立";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↑"; ObjectID = "544"; */
+"544.ibShadowedToolTip" = "Fn+Ctrl+↑";
+
+/* Class = "NSMenuItem"; title = "水平顯示"; ObjectID = "544"; */
+"544.title" = "水平顯示";
+
+/* Class = "NSMenuItem"; title = "隨系統啟動"; ObjectID = "545"; */
+"545.title" = "隨系統啟動";
+
+/* Class = "NSMenuItem"; title = "關於 iRotar"; ObjectID = "546"; */
+"546.title" = "關於 iRotar";
+
+/* Class = "NSMenuItem"; title = "退出 iRotar"; ObjectID = "547"; */
+"547.title" = "退出 iRotar";
+
+/* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↓"; ObjectID = "549"; */
+"549.ibShadowedToolTip" = "Fn+Ctrl+↓";
+
+/* Class = "NSMenuItem"; title = "水平翻轉"; ObjectID = "549"; */
+"549.title" = "水平翻轉";
+
+/* Class = "NSMenuItem"; title = "主顯示器"; ObjectID = "550"; */
+"550.title" = "主顯示器";
+
+/* Class = "NSMenuItem"; title = "使用全局熱鍵"; ObjectID = "563"; */
+"563.title" = "使用全局熱鍵";
+
+/* Class = "NSMenuItem"; title = "iRotar 幫助"; ObjectID = "565"; */
+"565.title" = "iRotar 幫助";
+
+/* Class = "NSMenuItem"; title = "反轉震動傳感器坐標軸"; ObjectID = "575"; */
+"575.title" = "反轉震動傳感器坐標軸";
+
+/* Class = "NSMenuItem"; title = "Rotate external Mouse and Trackpad"; ObjectID = "581"; */
+"581.title" = "同步旋轉外部鼠標及觸摸板";

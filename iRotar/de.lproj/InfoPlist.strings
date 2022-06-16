@@ -1,0 +1,12 @@
+/* Localized versions of Info.plist keys */
+"Automatically rotate"="Automatisch Drehen";
+"Enable Global Hotkey"="Globale Hotkey Benutzen";
+"Launch by System Start"="Beim Systemstart Starten";
+"Sensor Axes Swapped"="SuddenMotionSensor Achsen Tauscht";
+"Rotate external Mouse and Trackpad"="Externe Maus und Trackpad Drehen";
+
+"Main Display"="Hauptbildschirm";
+"Landscape"="Horizontal";
+"Left Portrait"="Links Oben";
+"Right Portrait"="Rechts Oben";
+"Upside Down"="Horizontal Umgekehrt";
