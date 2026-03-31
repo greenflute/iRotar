@@ -32,8 +32,8 @@
 /* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↓"; ObjectID = "549"; */
 "549.ibShadowedToolTip" = "Fn+Ctrl+↓";
 
-/* Class = "NSMenuItem"; title = "水平翻转"; ObjectID = "549"; */
-"549.title" = "水平翻转";
+/* Class = "NSMenuItem"; title = "上下倒置"; ObjectID = "549"; */
+"549.title" = "上下倒置";
 
 /* Class = "NSMenuItem"; title = "主显示器"; ObjectID = "550"; */
 "550.title" = "主显示器";

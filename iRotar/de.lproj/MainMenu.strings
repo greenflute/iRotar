@@ -32,8 +32,8 @@
 /* Class = "NSMenuItem"; ibShadowedToolTip = "Fn+Ctrl+↓"; ObjectID = "549"; */
 "549.ibShadowedToolTip" = "Fn+Ctrl+↓";
 
-/* Class = "NSMenuItem"; title = "Horizontal Umgekehrt"; ObjectID = "549"; */
-"549.title" = "Horizontal Umgekehrt";
+/* Class = "NSMenuItem"; title = "Auf dem Kopf"; ObjectID = "549"; */
+"549.title" = "Auf dem Kopf";
 
 /* Class = "NSMenuItem"; title = "Hauptbildschirm"; ObjectID = "550"; */
 "550.title" = "Hauptbildschirm";
