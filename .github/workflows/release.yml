@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           xcodebuild \
             -project iRotar.xcodeproj \
-            -target iRotar \
+            -scheme iRotar \
             -configuration Release \
             -derivedDataPath "$DERIVED_DATA" \
             CODE_SIGNING_ALLOWED=NO \
