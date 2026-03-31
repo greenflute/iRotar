@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "smslib.h"
+#import <IOKit/hidsystem/IOLLEvent.h>
 
 @interface AppDelegate()
 
@@ -39,6 +40,11 @@ enum {
     kMouseMove = 1,
     kMouseScroll = 2
 };
+
+typedef struct {
+    int64_t x;
+    int64_t y;
+} RotatedDelta;
 
 # pragma mark instance variables
 
@@ -265,71 +271,92 @@ CFRunLoopSourceRef _runLoopSource = NULL;
 
 # pragma mark Trackpad Rotation
 
+static BOOL eventIsTrackpadPointerEvent(CGEventRef event) {
+    return CGEventGetIntegerValueField(event, kCGMouseEventSubtype) == NX_SUBTYPE_MOUSE_TOUCH;
+}
+
+static BOOL eventIsTrackpadScrollEvent(CGEventRef event) {
+    int64_t isContinuous = CGEventGetIntegerValueField(event, kCGScrollWheelEventIsContinuous);
+    int64_t scrollPhase = CGEventGetIntegerValueField(event, kCGScrollWheelEventScrollPhase);
+    int64_t momentumPhase = CGEventGetIntegerValueField(event, kCGScrollWheelEventMomentumPhase);
+    return (isContinuous != 0) || (scrollPhase != 0) || (momentumPhase != 0);
+}
+
+static RotatedDelta rotateDeltaForAngle(int64_t dx, int64_t dy, long angle) {
+    RotatedDelta rotated = {dx, dy};
+
+    switch (angle) {
+        case 90:
+            rotated.x = -dy;
+            rotated.y = dx;
+            break;
+        case 180:
+            rotated.x = -dx;
+            rotated.y = -dy;
+            break;
+        case 270:
+            rotated.x = dy;
+            rotated.y = -dx;
+            break;
+        default:
+            break;
+    }
+
+    return rotated;
+}
+
+static void rotateIntegerFields(CGEventRef event, CGEventField xField, CGEventField yField, long angle) {
+    int64_t dx = CGEventGetIntegerValueField(event, xField);
+    int64_t dy = CGEventGetIntegerValueField(event, yField);
+    RotatedDelta rotated = rotateDeltaForAngle(dx, dy, angle);
+
+    CGEventSetIntegerValueField(event, xField, rotated.x);
+    CGEventSetIntegerValueField(event, yField, rotated.y);
+}
+
 CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
     long tt = kMouseOther;
-    CGEventField fx, fy;
     
     switch (type) {
         case kCGEventMouseMoved:
         case kCGEventLeftMouseDragged:
         case kCGEventRightMouseDragged:
         case kCGEventOtherMouseDragged:
-            fx = kCGMouseEventDeltaX;
-            fy = kCGMouseEventDeltaY;
             tt = kMouseMove;
             break;
         case kCGEventScrollWheel:
-            fx = kCGScrollWheelEventDeltaAxis2;
-            fy = kCGScrollWheelEventDeltaAxis1;
             tt = kMouseScroll;
             break;
         default:
             break;
     }
     
-    if(tt != kMouseOther){
-        
-        CGPoint location = CGEventGetLocation(event);
-#if DEBUG
-        double ox=location.x, oy=location.y;
-#endif
-        int64_t dx = CGEventGetIntegerValueField(event, fx);
-        int64_t dy = CGEventGetIntegerValueField(event, fy);
-        
-        int64_t ndx = (_angle == 90 ? -dy : _angle == 180 ? -dx : _angle == 270 ? dy : dx);
-        int64_t ndy = (_angle == 90 ? dx : _angle == 180 ? -dy : _angle == 270 ? -dx : dy);
-        
-        if(tt == kMouseScroll){
-            
-            CGEventSetIntegerValueField(event, fx, ndx);
-            CGEventSetIntegerValueField(event, fy, ndy);
-            
-        }else if(tt == kMouseMove){
-            
-            //1. universal adjustment
-            //ndx = ndx * 0.6;
-            //ndy = ndy * 0.6;
-            //2. ratio based adjustment
-            ndx = (double)ndx * (_angle == 90 ? 0.6 : _angle == 270 ? 0.4 : 0.6);
-            ndy = (double)ndy * (_angle == 90 ? 0.4 : _angle == 270 ? 0.6 : 0.6);
-            //3. statistic based adjustment
-            //ndx = (_angle == 90) ? (double)(ndx + ndy * 0.5) : (_angle == 270) ? (double)(ndx - ndy * 0.5) : (double)(ndx * 0.6);
-            //ndy = (_angle == 90) ? (double)(ndy - ndx * 0.33) : (_angle == 270) ? (double)(ndy + ndx * 0.33) : (double)(ndy * 0.6);
-            
-            CGEventSetIntegerValueField(event, fx, ndx);
-            CGEventSetIntegerValueField(event, fy, ndy);
-            
-            location.x += ndx;
-            location.y += ndy;
-            CGEventSetLocation(event, location);
-            CGWarpMouseCursorPosition(location);
-            //CGWarpMouseCursorPosition(CGPointMake(location.x+ndx, location.y+dy));
+    if (_angle == 0 || tt == kMouseOther) {
+        return event;
+    }
+
+    if (tt == kMouseMove) {
+        if (!eventIsTrackpadPointerEvent(event)) {
+            return event;
         }
 
-#if DEBUG
-        NSLog(@"%ld %s: (%ld, %ld) + (%lld, %lld) --> (%lld, %lld) ==> (%ld, %ld)\n", _angle, (tt==1?"move":"scroll"), (long)ox, (long)oy, dx, dy, ndx, ndy, (long)location.x, (long)location.y );
-#endif
+        rotateIntegerFields(event, kCGMouseEventDeltaX, kCGMouseEventDeltaY, _angle);
+        rotateIntegerFields(event, kCGEventUnacceleratedPointerMovementX, kCGEventUnacceleratedPointerMovementY, _angle);
+        return event;
     }
+
+    if (tt == kMouseScroll) {
+        if (!eventIsTrackpadScrollEvent(event)) {
+            return event;
+        }
+
+        rotateIntegerFields(event, kCGScrollWheelEventDeltaAxis2, kCGScrollWheelEventDeltaAxis1, _angle);
+        rotateIntegerFields(event, kCGScrollWheelEventPointDeltaAxis2, kCGScrollWheelEventPointDeltaAxis1, _angle);
+        rotateIntegerFields(event, kCGScrollWheelEventFixedPtDeltaAxis2, kCGScrollWheelEventFixedPtDeltaAxis1, _angle);
+        rotateIntegerFields(event, kCGScrollWheelEventRawDeltaAxis2, kCGScrollWheelEventRawDeltaAxis1, _angle);
+        rotateIntegerFields(event, kCGScrollWheelEventAcceleratedDeltaAxis2, kCGScrollWheelEventAcceleratedDeltaAxis1, _angle);
+    }
+
     return event;
 }
 
@@ -355,14 +382,12 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 -(void) enableEventTap{
     if(!CGEventTapIsEnabled(_eventTap)) {
         CGEventTapEnable(_eventTap, true);
-        CGAssociateMouseAndMouseCursorPosition(false);
     }
 }
 
 -(void) disableEventTap{
     if(CGEventTapIsEnabled(_eventTap)){
         CGEventTapEnable(_eventTap, false);
-        CGAssociateMouseAndMouseCursorPosition(true);
     }
 }
 
@@ -370,7 +395,6 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     //if(CFRunLoopContainsSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes)){
     //    CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
     
-        CGAssociateMouseAndMouseCursorPosition(true);
         if(CFRunLoopSourceIsValid(_runLoopSource)) CFRunLoopSourceInvalidate(_runLoopSource);
     //}
 }
@@ -583,13 +607,11 @@ IOOptionBits angle2options(long angle){
         }
     }
     
-    //put it here to fix odd problem of event tap.
-    //no need to process event in normal direction.
-    /*if(_angle==0){
+    if(_angle==0){
         [self disableEventTap];
     }else{
         [self enableEventTap];
-    }*/
+    }
 
 }
 

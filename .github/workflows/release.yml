@@ -1,0 +1,66 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build macOS app
+        env:
+          DERIVED_DATA: ${{ runner.temp }}/iRotar-DerivedData
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project iRotar.xcodeproj \
+            -target iRotar \
+            -configuration Release \
+            -derivedDataPath "$DERIVED_DATA" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package app
+        id: package
+        env:
+          DERIVED_DATA: ${{ runner.temp }}/iRotar-DerivedData
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="manual-${GITHUB_RUN_NUMBER}"
+          fi
+
+          APP_PATH="$DERIVED_DATA/Build/Products/Release/iRotar.app"
+          ZIP_PATH="dist/iRotar-${VERSION}.zip"
+
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
+
+          echo "zip_path=$ZIP_PATH" >> "$GITHUB_OUTPUT"
+          echo "zip_name=$(basename "$ZIP_PATH")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.zip_name }}
+          path: ${{ steps.package.outputs.zip_path }}
+
+      - name: Publish GitHub release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.package.outputs.zip_path }}
+          generate_release_notes: true
