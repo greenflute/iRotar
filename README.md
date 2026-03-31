@@ -1,5 +1,7 @@
 # iRotar
 
+[中文](README.md) | [English](README.en.md) | [Deutsch](README.de.md)
+
 Automatically rotate the screen with the built-in Burst motion sensor of the MacBook Pro.
 
 

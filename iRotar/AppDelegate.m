@@ -285,18 +285,21 @@ static BOOL eventIsTrackpadScrollEvent(CGEventRef event) {
 static RotatedDelta rotateDeltaForAngle(int64_t dx, int64_t dy, long angle) {
     RotatedDelta rotated = {dx, dy};
 
+    // Project convention:
+    // 90  = left portrait  = menu bar on the display's original left edge
+    // 270 = right portrait = menu bar on the display's original right edge
     switch (angle) {
         case 90:
-            rotated.x = -dy;
-            rotated.y = dx;
+            rotated.x = dy;
+            rotated.y = -dx;
             break;
         case 180:
             rotated.x = -dx;
             rotated.y = -dy;
             break;
         case 270:
-            rotated.x = dy;
-            rotated.y = -dx;
+            rotated.x = -dy;
+            rotated.y = dx;
             break;
         default:
             break;
@@ -443,6 +446,9 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     
     //NSLog(@"SMSTimer: %f, %f, %f", accel.x, accel.y, accel.z);
     long angle = 0;
+    // Some Mac models expose mirrored sensor axes. This flag only swaps
+    // the inferred 90/270 display orientation from accelerometer input.
+    // It does not change the touchpad/mouse delta rotation rules.
     if(_sensorAxesSwapped == YES){
         angle = (accel.x < -0.9f) ? 270 : (accel.z < -0.9f) ? 180 : (accel.x > 0.9) ? 90 : 0;
     }else{
