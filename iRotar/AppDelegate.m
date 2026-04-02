@@ -29,6 +29,7 @@ NSString *const Setting_EnableGlobalHotkey      = @"Enable Global Hotkey";
 NSString *const Setting_EnableLaunchAtLogin     = @"Launch by System Start";
 NSString *const Setting_EnableSwapSensorAxes    = @"Sensor Axes Swapped";
 NSString *const Setting_RotateExternalDevice    = @"Rotate external Mouse and Trackpad";
+NSString *const Setting_ManualRotationAngle     = @"Manual rotation angle";
 
 NSString *const Orientation_Landscape           = @"Landscape";
 NSString *const Orientation_LeftPortrait        = @"Left Portrait";
@@ -122,6 +123,10 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     
     //dirsplay rotation, if screen has been rotated before app start
     _angle = (int) CGDisplayRotation(0);
+    if([_userDefaults objectForKey:Setting_ManualRotationAngle] == nil){
+        [_userDefaults setInteger:_angle forKey:Setting_ManualRotationAngle];
+    }
+    [self syncRotationMenuStateForAngle:_angle];
     
     //event tap
     [self registerEventTap];
@@ -463,6 +468,26 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     [_userDefaults setBool:swapped  forKey:Setting_EnableSwapSensorAxes];
 }
 
+- (long)manualRotationAngle{
+    return [_userDefaults integerForKey:Setting_ManualRotationAngle];
+}
+
+- (void)setManualRotationAngle:(long)angle{
+    [_userDefaults setInteger:angle forKey:Setting_ManualRotationAngle];
+}
+
+- (void)syncRotationMenuStateForAngle:(long)angle{
+    NSMenuItem* leftMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_LeftPortrait, @"InfoPlist", nil)];
+    NSMenuItem* rightMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_RightPortrait, @"InfoPlist", nil)];
+    NSMenuItem* downMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_UpsideDown, @"InfoPlist", nil)];
+    NSMenuItem* upMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_Landscape, @"InfoPlist", nil)];
+
+    [leftMenuItem setState:(angle == 90) ? NSOnState : NSOffState];
+    [downMenuItem setState:(angle == 180) ? NSOnState : NSOffState];
+    [rightMenuItem setState:(angle == 270) ? NSOnState : NSOffState];
+    [upMenuItem setState:(angle == 0) ? NSOnState : NSOffState];
+}
+
 # pragma mark UI Action
 
 - (IBAction)configure:(NSMenuItem *)sender {
@@ -474,9 +499,11 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         if([sender state]==NSOnState){            
             [self disableSMSLib];
             [sender setState:NSOffState];
+            [self rotateCurrentDisplayWithAngle:[self manualRotationAngle]];
         }else{
             if([self enableSMSLib]){
                 [sender setState:NSOnState];
+                [self handleSMSTimer];
             }
             
         }
@@ -511,15 +538,23 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 }
 
 - (IBAction)rotate:(NSMenuItem *)sender {
-    //NSMenuItem* upMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_Landscape, @"InfoPlist", nil)];
+    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil)];
     NSMenuItem* leftMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_LeftPortrait, @"InfoPlist", nil)];
     NSMenuItem* rightMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_RightPortrait, @"InfoPlist", nil)];
     NSMenuItem* downMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_UpsideDown, @"InfoPlist", nil)];
     
     //determine degree
     long angle = (sender==leftMenuItem) ? 90 : (sender==downMenuItem) ? 180 : (sender==rightMenuItem) ? 270 : 0;
-    //rotate
+    [self setManualRotationAngle:angle];
+
+    // Manual selection overrides accelerometer-driven rotation.
+    if([autoRotateMenuItem state] == NSOnState){
+        [self disableSMSLib];
+        [autoRotateMenuItem setState:NSOffState];
+    }
+
     [self rotateCurrentDisplayWithAngle:angle];
+    [self syncRotationMenuStateForAngle:angle];
 }
 
 
@@ -612,6 +647,8 @@ IOOptionBits angle2options(long angle){
             _angle = angle;
         }
     }
+
+    [self syncRotationMenuStateForAngle:_angle];
     
     if(_angle==0){
         [self disableEventTap];
