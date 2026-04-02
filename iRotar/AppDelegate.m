@@ -80,6 +80,16 @@ CFRunLoopSourceRef _runLoopSource = NULL;
 
 # pragma mark Application Delegate
 
+-(BOOL) probeSMSAvailability{
+    if (smsStartup(nil, nil) == SMS_SUCCESS){
+        smsShutdown();
+        _smsAvailable = YES;
+        return YES;
+    }
+    _smsAvailable = NO;
+    return NO;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification{
     //init variables
     _userDefaults = [NSUserDefaults standardUserDefaults];
@@ -92,6 +102,7 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     
     [_statusItem setImage: [NSImage imageNamed: @"iRotarStatusBar"]];
     [_statusItem setToolTip: NSLocalizedStringFromTable(@"iRotar", @"InfoPlist", nil)];
+    [self probeSMSAvailability];
     
     //setup Auto Launch
     NSMenuItem *menuItem = [_statusMenu itemWithTag:kMenuTagLaunchAtLogin];
@@ -317,8 +328,8 @@ static RotatedDelta rotateDeltaForAngle(int64_t dx, int64_t dy, long angle) {
             rotated.y = -dx;
             break;
         case 180:
-            rotated.x = dx;
-            rotated.y = dy;
+            rotated.x = -dx;
+            rotated.y = -dy;
             break;
         case 270:
             rotated.x = -dy;
@@ -517,6 +528,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 
 - (void)updateAutoRotateMenuItemEnabled:(BOOL)enabled{
     NSMenuItem *menuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
+    NSMenuItem *swapMenuItem = [_statusMenu itemWithTag:kMenuTagSwapSensorAxes];
     NSString *title = NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil);
 
     if(!_smsAvailable){
@@ -526,6 +538,11 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 
     [menuItem setTitle:title];
     [menuItem setState:enabled ? NSOnState : NSOffState];
+    [menuItem setEnabled:_smsAvailable];
+    [swapMenuItem setEnabled:_smsAvailable];
+    if(!_smsAvailable){
+        [swapMenuItem setState:NSOffState];
+    }
 }
 
 # pragma mark UI Action
