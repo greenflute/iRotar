@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "smslib.h"
 #import <IOKit/hidsystem/IOLLEvent.h>
+#import <sys/sysctl.h>
 
 @interface AppDelegate()
 
@@ -60,6 +61,15 @@ typedef struct {
     int64_t y;
 } RotatedDelta;
 
+typedef void *MTDeviceRef;
+typedef int (*MTContactCallbackFunction)(MTDeviceRef, void *, int, double, int);
+
+extern MTDeviceRef MTDeviceCreateDefault(void);
+extern void MTRegisterContactFrameCallback(MTDeviceRef device, MTContactCallbackFunction callback);
+extern void MTUnregisterContactFrameCallback(MTDeviceRef device, MTContactCallbackFunction callback);
+extern void MTDeviceStart(MTDeviceRef device, int);
+extern void MTDeviceStop(MTDeviceRef device);
+
 # pragma mark instance variables
 
 // flag for sensor swap
@@ -68,6 +78,8 @@ BOOL _sensorAxesSwapped = NO;
 // sms timer object
 NSTimer *_smsTimer = nil;
 BOOL _smsAvailable = YES;
+MTDeviceRef _trackpadDevice = NULL;
+NSTimeInterval _lastTrackpadTouchTimestamp = 0;
 
 // monitor object
 id   _hotkeyMonitor = nil;
@@ -79,6 +91,11 @@ CFRunLoopSourceRef _runLoopSource = NULL;
 
 
 # pragma mark Application Delegate
+
+static int trackpadTouchCallback(MTDeviceRef device, void *data, int nFingers, double timestamp, int frame) {
+    _lastTrackpadTouchTimestamp = [NSDate timeIntervalSinceReferenceDate];
+    return 0;
+}
 
 -(BOOL) hasMotionSensorService{
     const char *serviceNames[] = {
@@ -117,12 +134,45 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     }
 
     if (smsStartup(nil, nil) == SMS_SUCCESS){
+        sms_acceleration accel = {0};
+        BOOL hasUsableSample = NO;
+
+        for (int index = 0; index < 3; index++) {
+            if (smsGetData(&accel) == SMS_SUCCESS) {
+                float magnitude = fabsf(accel.x) + fabsf(accel.y) + fabsf(accel.z);
+                if (magnitude > 0.2f) {
+                    hasUsableSample = YES;
+                    break;
+                }
+            }
+            usleep(5000);
+        }
         smsShutdown();
-        _smsAvailable = YES;
-        return YES;
+        _smsAvailable = hasUsableSample;
+        return hasUsableSample;
     }
     _smsAvailable = NO;
     return NO;
+}
+
+-(void) startTrackpadMonitoring{
+    if(_trackpadDevice){
+        return;
+    }
+
+    _trackpadDevice = MTDeviceCreateDefault();
+    if(_trackpadDevice){
+        MTRegisterContactFrameCallback(_trackpadDevice, trackpadTouchCallback);
+        MTDeviceStart(_trackpadDevice, 0);
+    }
+}
+
+-(void) stopTrackpadMonitoring{
+    if(_trackpadDevice){
+        MTUnregisterContactFrameCallback(_trackpadDevice, trackpadTouchCallback);
+        MTDeviceStop(_trackpadDevice);
+        _trackpadDevice = NULL;
+    }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification{
@@ -138,6 +188,7 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     [_statusItem setImage: [NSImage imageNamed: @"iRotarStatusBar"]];
     [_statusItem setToolTip: NSLocalizedStringFromTable(@"iRotar", @"InfoPlist", nil)];
     [self probeSMSAvailability];
+    [self startTrackpadMonitoring];
     
     //setup Auto Launch
     NSMenuItem *menuItem = [_statusMenu itemWithTag:kMenuTagLaunchAtLogin];
@@ -216,6 +267,7 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     }
     
     //release resources
+    [self stopTrackpadMonitoring];
     CFRelease(_loginItems);
 }
 
@@ -341,7 +393,15 @@ CFRunLoopSourceRef _runLoopSource = NULL;
 # pragma mark Trackpad Rotation
 
 static BOOL eventIsTrackpadPointerEvent(CGEventRef event) {
-    return CGEventGetIntegerValueField(event, kCGMouseEventSubtype) == NX_SUBTYPE_MOUSE_TOUCH;
+    if (CGEventGetIntegerValueField(event, kCGMouseEventSubtype) == NX_SUBTYPE_MOUSE_TOUCH) {
+        return YES;
+    }
+
+    if (_lastTrackpadTouchTimestamp <= 0) {
+        return NO;
+    }
+
+    return ([NSDate timeIntervalSinceReferenceDate] - _lastTrackpadTouchTimestamp) < 0.12;
 }
 
 static BOOL eventIsTrackpadScrollEvent(CGEventRef event) {
@@ -583,7 +643,6 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 # pragma mark UI Action
 
 - (IBAction)configure:(NSMenuItem *)sender {
-    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
     switch ([sender tag]) {
         case kMenuTagAutoRotate:
         if([sender state]==NSOnState){            
