@@ -127,7 +127,66 @@ static int trackpadTouchCallback(MTDeviceRef device, void *data, int nFingers, d
     return NO;
 }
 
+-(NSString *)hardwareModel{
+    size_t size = 0;
+    if (sysctlbyname("hw.model", NULL, &size, NULL, 0) != 0 || size == 0) {
+        return nil;
+    }
+
+    char *buffer = calloc(1, size);
+    if (!buffer) {
+        return nil;
+    }
+
+    NSString *model = nil;
+    if (sysctlbyname("hw.model", buffer, &size, NULL, 0) == 0) {
+        model = [NSString stringWithUTF8String:buffer];
+    }
+
+    free(buffer);
+    return model;
+}
+
+-(BOOL) modelLikelyHasSMS{
+    NSString *model = [self hardwareModel];
+    if (!model) {
+        return NO;
+    }
+
+    if ([model hasPrefix:@"PowerBook"]) {
+        return YES;
+    }
+
+    NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"^(MacBookPro|MacBookAir|MacBook)(\\d+),"
+                                                                           options:0
+                                                                             error:nil];
+    NSTextCheckingResult *match = [regex firstMatchInString:model options:0 range:NSMakeRange(0, [model length])];
+    if (!match || [match numberOfRanges] < 3) {
+        return NO;
+    }
+
+    NSString *family = [model substringWithRange:[match rangeAtIndex:1]];
+    NSInteger major = [[model substringWithRange:[match rangeAtIndex:2]] integerValue];
+
+    if ([family isEqualToString:@"MacBookPro"]) {
+        return major <= 5;
+    }
+    if ([family isEqualToString:@"MacBook"]) {
+        return major <= 6;
+    }
+    if ([family isEqualToString:@"MacBookAir"]) {
+        return major <= 1;
+    }
+
+    return NO;
+}
+
 -(BOOL) probeSMSAvailability{
+    if (![self modelLikelyHasSMS]) {
+        _smsAvailable = NO;
+        return NO;
+    }
+
     if (![self hasMotionSensorService]) {
         _smsAvailable = NO;
         return NO;
@@ -476,8 +535,19 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
             return event;
         }
 
-        rotateIntegerFields(event, kCGMouseEventDeltaX, kCGMouseEventDeltaY, _angle);
-        rotateIntegerFields(event, kCGEventUnacceleratedPointerMovementX, kCGEventUnacceleratedPointerMovementY, _angle);
+        int64_t dx = CGEventGetIntegerValueField(event, kCGMouseEventDeltaX);
+        int64_t dy = CGEventGetIntegerValueField(event, kCGMouseEventDeltaY);
+        RotatedDelta rotated = rotateDeltaForAngle(dx, dy, _angle);
+
+        CGEventSetIntegerValueField(event, kCGMouseEventDeltaX, rotated.x);
+        CGEventSetIntegerValueField(event, kCGMouseEventDeltaY, rotated.y);
+        CGEventSetIntegerValueField(event, kCGEventUnacceleratedPointerMovementX, rotated.x);
+        CGEventSetIntegerValueField(event, kCGEventUnacceleratedPointerMovementY, rotated.y);
+
+        CGPoint location = CGEventGetLocation(event);
+        location.x += rotated.x;
+        location.y += rotated.y;
+        CGEventSetLocation(event, location);
         return event;
     }
 
