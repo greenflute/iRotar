@@ -42,6 +42,18 @@ enum {
     kMouseScroll = 2
 };
 
+enum {
+    kMenuTagLandscape = 1001,
+    kMenuTagLeftPortrait = 1002,
+    kMenuTagRightPortrait = 1003,
+    kMenuTagUpsideDown = 1004,
+    kMenuTagAutoRotate = 1101,
+    kMenuTagGlobalHotkey = 1102,
+    kMenuTagLaunchAtLogin = 1103,
+    kMenuTagRotateExternalDevice = 1104,
+    kMenuTagSwapSensorAxes = 1105
+};
+
 typedef struct {
     int64_t x;
     int64_t y;
@@ -80,11 +92,11 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     [_statusItem setToolTip: NSLocalizedStringFromTable(@"iRotar", @"InfoPlist", nil)];
     
     //setup Auto Launch
-    NSMenuItem *menuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableLaunchAtLogin, @"InfoPlist", nil)];
+    NSMenuItem *menuItem = [_statusMenu itemWithTag:kMenuTagLaunchAtLogin];
     [menuItem setState: [self isLaunchAtLogin] ? NSOnState : NSOffState];
        
     //setup Global Hotkey
-    menuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableGlobalHotkey, @"InfoPlist", nil)];
+    menuItem = [_statusMenu itemWithTag:kMenuTagGlobalHotkey];
     if([_userDefaults boolForKey:Setting_EnableGlobalHotkey] == YES){
         [menuItem setState: NSOnState];
         //register hotkey
@@ -99,7 +111,7 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     }
     
     //setup Auto Rotate
-    menuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil)];
+    menuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
     if([_userDefaults boolForKey:Setting_AutomaticallyRotate] == YES){
         
         if([self startSMSLib] == YES){
@@ -113,7 +125,7 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     }
    
     //swapped sensor
-    menuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableSwapSensorAxes, @"InfoPlist", nil)];
+    menuItem = [_statusMenu itemWithTag:kMenuTagSwapSensorAxes];
     if([_userDefaults boolForKey:Setting_EnableSwapSensorAxes] == YES){
         _sensorAxesSwapped = YES;
         [menuItem setState:  NSOnState];
@@ -299,8 +311,8 @@ static RotatedDelta rotateDeltaForAngle(int64_t dx, int64_t dy, long angle) {
             rotated.y = -dx;
             break;
         case 180:
-            rotated.x = -dx;
-            rotated.y = -dy;
+            rotated.x = dx;
+            rotated.y = dy;
             break;
         case 270:
             rotated.x = -dy;
@@ -477,10 +489,10 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 }
 
 - (void)syncRotationMenuStateForAngle:(long)angle{
-    NSMenuItem* leftMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_LeftPortrait, @"InfoPlist", nil)];
-    NSMenuItem* rightMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_RightPortrait, @"InfoPlist", nil)];
-    NSMenuItem* downMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_UpsideDown, @"InfoPlist", nil)];
-    NSMenuItem* upMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_Landscape, @"InfoPlist", nil)];
+    NSMenuItem* leftMenuItem = [_statusMenu itemWithTag:kMenuTagLeftPortrait];
+    NSMenuItem* rightMenuItem = [_statusMenu itemWithTag:kMenuTagRightPortrait];
+    NSMenuItem* downMenuItem = [_statusMenu itemWithTag:kMenuTagUpsideDown];
+    NSMenuItem* upMenuItem = [_statusMenu itemWithTag:kMenuTagLandscape];
 
     [leftMenuItem setState:(angle == 90) ? NSOnState : NSOffState];
     [downMenuItem setState:(angle == 180) ? NSOnState : NSOffState];
@@ -491,11 +503,9 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 # pragma mark UI Action
 
 - (IBAction)configure:(NSMenuItem *)sender {
-    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil)];
-    NSMenuItem* hotkeyMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableGlobalHotkey, @"InfoPlist", nil)];
-    NSMenuItem* loginMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableLaunchAtLogin, @"InfoPlist", nil)];
-    NSMenuItem* swapMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_EnableSwapSensorAxes, @"InfoPlist", nil)];
-    if(sender == autoRotateMenuItem){
+    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
+    switch ([sender tag]) {
+        case kMenuTagAutoRotate:
         if([sender state]==NSOnState){            
             [self disableSMSLib];
             [sender setState:NSOffState];
@@ -507,7 +517,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
             }
             
         }
-    }else if(sender == hotkeyMenuItem){
+        break;
+        case kMenuTagGlobalHotkey:
         if([sender state]==NSOnState){
             [self disableHotkey];
             [sender setState:NSOffState];
@@ -516,7 +527,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
                 [sender setState:NSOnState];
             }
         }
-    }else if(sender == loginMenuItem){
+        break;
+        case kMenuTagLaunchAtLogin:
         
         if([sender state]==NSOnState){
             [self setLaunchAtLogin:NO];
@@ -525,7 +537,8 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
             [self setLaunchAtLogin:YES];
             [sender setState:NSOnState];
         }
-    }else if(sender == swapMenuItem){
+        break;
+        case kMenuTagSwapSensorAxes:
         
         if([sender state]==NSOnState){
             [self setSensorAxesSwapped:NO];
@@ -533,18 +546,18 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         }else{
             [self setSensorAxesSwapped:YES];
             [sender setState:NSOnState];
-        }        
+        }
+        break;
+        default:
+        break;
     }
 }
 
 - (IBAction)rotate:(NSMenuItem *)sender {
-    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil)];
-    NSMenuItem* leftMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_LeftPortrait, @"InfoPlist", nil)];
-    NSMenuItem* rightMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_RightPortrait, @"InfoPlist", nil)];
-    NSMenuItem* downMenuItem = [_statusMenu itemWithTitle: NSLocalizedStringFromTable(Orientation_UpsideDown, @"InfoPlist", nil)];
+    NSMenuItem* autoRotateMenuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
     
     //determine degree
-    long angle = (sender==leftMenuItem) ? 90 : (sender==downMenuItem) ? 180 : (sender==rightMenuItem) ? 270 : 0;
+    long angle = ([sender tag] == kMenuTagLeftPortrait) ? 90 : ([sender tag] == kMenuTagUpsideDown) ? 180 : ([sender tag] == kMenuTagRightPortrait) ? 270 : 0;
     [self setManualRotationAngle:angle];
 
     // Manual selection overrides accelerometer-driven rotation.

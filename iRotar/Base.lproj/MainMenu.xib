@@ -53,6 +53,7 @@
 					<object class="NSMenuItem" id="60137278">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Landscape</string>
+						<int key="NSTag">1001</int>
 						<string key="NSKeyEquiv"></string>
 						<int key="NSKeyEquivModMask">262144</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -62,6 +63,7 @@
 					<object class="NSMenuItem" id="108851694">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Left Portrait</string>
+						<int key="NSTag">1002</int>
 						<string key="NSKeyEquiv"></string>
 						<int key="NSKeyEquivModMask">262144</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -71,6 +73,7 @@
 					<object class="NSMenuItem" id="65577516">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Right Portrait</string>
+						<int key="NSTag">1003</int>
 						<string key="NSKeyEquiv"></string>
 						<int key="NSKeyEquivModMask">262144</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -80,6 +83,7 @@
 					<object class="NSMenuItem" id="613519718">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Upside Down</string>
+						<int key="NSTag">1004</int>
 						<string key="NSKeyEquiv"></string>
 						<int key="NSKeyEquivModMask">262144</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -99,6 +103,7 @@
 					<object class="NSMenuItem" id="1041470768">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Automatically rotate</string>
+						<int key="NSTag">1101</int>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
 						<reference key="NSOnImage" ref="759668332"/>
@@ -107,6 +112,7 @@
 					<object class="NSMenuItem" id="474885647">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Enable Global Hotkey</string>
+						<int key="NSTag">1102</int>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
 						<reference key="NSOnImage" ref="759668332"/>
@@ -115,6 +121,7 @@
 					<object class="NSMenuItem" id="154044051">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Launch by System Start</string>
+						<int key="NSTag">1103</int>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
 						<reference key="NSOnImage" ref="759668332"/>
@@ -123,6 +130,7 @@
 					<object class="NSMenuItem" id="694746245">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">Rotate external Mouse and Trackpad</string>
+						<int key="NSTag">1104</int>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
 						<reference key="NSOnImage" ref="759668332"/>
@@ -131,6 +139,7 @@
 					<object class="NSMenuItem" id="505691802">
 						<reference key="NSMenu" ref="888058380"/>
 						<string key="NSTitle">SuddenMotionSensor Axes Swapped</string>
+						<int key="NSTag">1105</int>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
 						<reference key="NSOnImage" ref="759668332"/>
