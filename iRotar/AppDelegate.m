@@ -80,7 +80,42 @@ CFRunLoopSourceRef _runLoopSource = NULL;
 
 # pragma mark Application Delegate
 
+-(BOOL) hasMotionSensorService{
+    const char *serviceNames[] = {
+        "SMCMotionSensor",
+        "IOI2CMotionSensor",
+        "PMUMotionSensor"
+    };
+
+    for (NSUInteger index = 0; index < sizeof(serviceNames) / sizeof(serviceNames[0]); index++) {
+        io_iterator_t iterator = IO_OBJECT_NULL;
+        CFMutableDictionaryRef match = IOServiceMatching(serviceNames[index]);
+        if (!match) {
+            continue;
+        }
+
+        kern_return_t result = IOServiceGetMatchingServices(kIOMasterPortDefault, match, &iterator);
+        if (result == KERN_SUCCESS) {
+            io_object_t service = IOIteratorNext(iterator);
+            if (iterator) {
+                IOObjectRelease(iterator);
+            }
+            if (service) {
+                IOObjectRelease(service);
+                return YES;
+            }
+        }
+    }
+
+    return NO;
+}
+
 -(BOOL) probeSMSAvailability{
+    if (![self hasMotionSensorService]) {
+        _smsAvailable = NO;
+        return NO;
+    }
+
     if (smsStartup(nil, nil) == SMS_SUCCESS){
         smsShutdown();
         _smsAvailable = YES;
