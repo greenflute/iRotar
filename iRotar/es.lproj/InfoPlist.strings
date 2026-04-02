@@ -3,6 +3,7 @@
 "Enable Global Hotkey"="Habilitar acceso directo global";
 "Launch by System Start"="Lanzar por el Sistema de Inicio";
 "Sensor Axes Swapped"="Eje Reverse sensor de vibración";
+"Accelerometer initialization failed"="No se pudo inicializar el acelerómetro";
 "Rotate external Mouse and Trackpad"="Ratón y Trackpad Rotación externa";
 
 "Main Display"="Pantalla principal";

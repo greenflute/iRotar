@@ -4,6 +4,7 @@
 "Launch by System Start"="随系统启动";
 "Sensor Axes Swapped"="反转震动传感器坐标轴";
 "Rotate external Mouse and Trackpad"="同步旋转外部鼠标及触摸板";
+"Accelerometer initialization failed"="加速传感器初始化失败";
 
 "Main Display"="主显示器";
 "Landscape"="水平显示";

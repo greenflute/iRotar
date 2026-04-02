@@ -30,6 +30,7 @@ NSString *const Setting_EnableLaunchAtLogin     = @"Launch by System Start";
 NSString *const Setting_EnableSwapSensorAxes    = @"Sensor Axes Swapped";
 NSString *const Setting_RotateExternalDevice    = @"Rotate external Mouse and Trackpad";
 NSString *const Setting_ManualRotationAngle     = @"Manual rotation angle";
+NSString *const Message_SensorInitFailed        = @"Accelerometer initialization failed";
 
 NSString *const Orientation_Landscape           = @"Landscape";
 NSString *const Orientation_LeftPortrait        = @"Left Portrait";
@@ -66,6 +67,7 @@ BOOL _sensorAxesSwapped = NO;
 
 // sms timer object
 NSTimer *_smsTimer = nil;
+BOOL _smsAvailable = YES;
 
 // monitor object
 id   _hotkeyMonitor = nil;
@@ -115,13 +117,14 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     if([_userDefaults boolForKey:Setting_AutomaticallyRotate] == YES){
         
         if([self startSMSLib] == YES){
-            [menuItem setState:  NSOnState];
+            [self updateAutoRotateMenuItemEnabled:YES];
+            [self handleSMSTimer];
         }else{
-            [menuItem setState: NSOffState];
+            [self updateAutoRotateMenuItemEnabled:NO];
             [self disableSMSLib];
         }
     }else{
-        [menuItem setState:  NSOffState];
+        [self updateAutoRotateMenuItemEnabled:NO];
     }
    
     //swapped sensor
@@ -132,6 +135,9 @@ CFRunLoopSourceRef _runLoopSource = NULL;
     }else{
         [menuItem setState:  NSOffState];
     }    
+
+    menuItem = [_statusMenu itemWithTag:kMenuTagRotateExternalDevice];
+    [menuItem setState:[_userDefaults boolForKey:Setting_RotateExternalDevice] ? NSOnState : NSOffState];
     
     //dirsplay rotation, if screen has been rotated before app start
     _angle = (int) CGDisplayRotation(0);
@@ -334,6 +340,10 @@ static void rotateIntegerFields(CGEventRef event, CGEventField xField, CGEventFi
     CGEventSetIntegerValueField(event, yField, rotated.y);
 }
 
+static BOOL shouldRotateExternalDevices(void) {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:Setting_RotateExternalDevice];
+}
+
 CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
     long tt = kMouseOther;
     
@@ -356,7 +366,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     }
 
     if (tt == kMouseMove) {
-        if (!eventIsTrackpadPointerEvent(event)) {
+        if (!eventIsTrackpadPointerEvent(event) && !shouldRotateExternalDevices()) {
             return event;
         }
 
@@ -366,7 +376,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     }
 
     if (tt == kMouseScroll) {
-        if (!eventIsTrackpadScrollEvent(event)) {
+        if (!eventIsTrackpadScrollEvent(event) && !shouldRotateExternalDevices()) {
             return event;
         }
 
@@ -425,6 +435,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 -(BOOL) startSMSLib{
     if (smsStartup(nil, nil)==SMS_SUCCESS){
         smsLoadCalibration();
+        _smsAvailable = YES;
         
         //setup timer and handler
         _smsTimer = [NSTimer scheduledTimerWithTimeInterval: SMSTimerInterval
@@ -434,14 +445,17 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
                                                    repeats: YES];
         return YES;
     }
+    _smsAvailable = NO;
     return NO;
 }
 
 -(BOOL) enableSMSLib{
     if([self startSMSLib]){
         [_userDefaults setBool:YES  forKey:Setting_AutomaticallyRotate];
+        [self updateAutoRotateMenuItemEnabled:YES];
         return YES;
     }
+    [self updateAutoRotateMenuItemEnabled:NO];
     return NO;
 }
 
@@ -454,6 +468,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 -(void) disableSMSLib{
     [self stopSMSLib];
     [_userDefaults setBool:NO  forKey:Setting_AutomaticallyRotate];    
+    [self updateAutoRotateMenuItemEnabled:NO];
 }
 
 -(void) handleSMSTimer{
@@ -498,6 +513,19 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     [downMenuItem setState:(angle == 180) ? NSOnState : NSOffState];
     [rightMenuItem setState:(angle == 270) ? NSOnState : NSOffState];
     [upMenuItem setState:(angle == 0) ? NSOnState : NSOffState];
+}
+
+- (void)updateAutoRotateMenuItemEnabled:(BOOL)enabled{
+    NSMenuItem *menuItem = [_statusMenu itemWithTag:kMenuTagAutoRotate];
+    NSString *title = NSLocalizedStringFromTable(Setting_AutomaticallyRotate, @"InfoPlist", nil);
+
+    if(!_smsAvailable){
+        NSString *failure = NSLocalizedStringFromTable(Message_SensorInitFailed, @"InfoPlist", nil);
+        title = [NSString stringWithFormat:@"%@ (%@)", title, failure];
+    }
+
+    [menuItem setTitle:title];
+    [menuItem setState:enabled ? NSOnState : NSOffState];
 }
 
 # pragma mark UI Action
@@ -546,6 +574,13 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         }else{
             [self setSensorAxesSwapped:YES];
             [sender setState:NSOnState];
+        }
+        break;
+        case kMenuTagRotateExternalDevice:
+        {
+            BOOL enabled = ([sender state] != NSOnState);
+            [_userDefaults setBool:enabled forKey:Setting_RotateExternalDevice];
+            [sender setState:enabled ? NSOnState : NSOffState];
         }
         break;
         default:

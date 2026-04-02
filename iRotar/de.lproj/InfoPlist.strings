@@ -3,6 +3,7 @@
 "Enable Global Hotkey"="Globale Hotkey Benutzen";
 "Launch by System Start"="Beim Systemstart Starten";
 "Sensor Axes Swapped"="SuddenMotionSensor Achsen Tauscht";
+"Accelerometer initialization failed"="Beschleunigungssensor konnte nicht initialisiert werden";
 "Rotate external Mouse and Trackpad"="Externe Maus und Trackpad Drehen";
 
 "Main Display"="Hauptbildschirm";
